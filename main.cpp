@@ -105,7 +105,14 @@ int main() {
             exit(3);
         }
     }
+
+    HANDLE* ppis = new HANDLE[amountOfClients];
+    for (size_t i = 0; i < amountOfClients; i++)
+    {
+        ppis[i] = pis[i].hProcess;
+    }
     
     
+    WaitForMultipleObjects(amountOfClients, ppis, TRUE, INFINITE);
     
 }
