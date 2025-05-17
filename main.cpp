@@ -35,19 +35,9 @@ int main() {
     size_t howMany;
     std::cin >> howMany;
 
-    writesEvents = new HANDLE[howMany];
-    readEvents = new HANDLE[howMany];
-
     for (size_t i = 0; i < howMany; i++)
     {
-        writesEvents[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
-        if (writesEvents[i] == NULL) {
-            std::cerr << "Cannot create write event: " << GetLastError() << '\n';
-        }
-        readEvents[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
-        if (readEvents[i] == NULL) {
-            std::cerr << "Cannot create read event: " << GetLastError() << '\n';
-        }
+        
 
         std::string name;
         int num;
@@ -62,6 +52,14 @@ int main() {
         strcpy(e.name, name.c_str());
         
         rfm.add(e);
+        writesEvents[num] = CreateEvent(NULL, TRUE, TRUE, NULL);
+        if (writesEvents[num] == NULL) {
+            std::cerr << "Cannot create write event: " << GetLastError() << '\n';
+        }
+        readEvents[num] = CreateEvent(NULL, TRUE, TRUE, NULL);
+        if (readEvents[num] == NULL) {
+            std::cerr << "Cannot create read event: " << GetLastError() << '\n';
+        }
     }
 
     std::cout << "\tHere the file:\n";

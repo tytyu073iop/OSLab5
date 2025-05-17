@@ -15,7 +15,7 @@ void thread(RFM* rfm)
     HANDLE namedPipe = CreateNamedPipe("\\\\.\\pipe\\OSLab5", PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 4096*sizeof(TCHAR), 4096*sizeof(TCHAR), 5000, NULL);
     if (!ConnectNamedPipe(namedPipe, NULL)) {
         std::cerr << "Error connecting to pipe: " << GetLastError() << '\n';
-        exit(3);
+        return;
     }
     std::cout << "Connection completed\n";
     
@@ -25,14 +25,14 @@ void thread(RFM* rfm)
         DWORD readBytes;
         if (!ReadFile(namedPipe, &command, sizeof(command), &readBytes, NULL)) {
             std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
-            exit(3);
+            return;
         }
         if (readBytes != sizeof(command)) {
             std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(command);
         }
         if (!ReadFile(namedPipe, &num, sizeof(num), &readBytes, NULL)) {
             std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
-            exit(3);
+            return;
         }
         if (readBytes != sizeof(num)) {
             std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(num);
@@ -49,7 +49,7 @@ void thread(RFM* rfm)
             SetEvent(readEvents[num]);
             if (!WriteFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
-                exit(3);
+                return;
             }
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(e);
@@ -58,7 +58,7 @@ void thread(RFM* rfm)
             
             if (!ReadFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
-                exit(3);
+                return;
             }
             std::cout << "read has2 ended\n";
             if (readBytes != sizeof(e)) {
@@ -83,7 +83,7 @@ void thread(RFM* rfm)
             SetEvent(readEvents[num]);
             if (!WriteFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
-                exit(3);
+                return;
             }
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(e);

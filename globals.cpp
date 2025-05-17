@@ -1,4 +1,4 @@
 #include "globals.h"
 
-HANDLE* writesEvents = nullptr;
-HANDLE* readEvents = nullptr;
+std::map<int, HANDLE> writesEvents;
+std::map<int, HANDLE> readEvents;

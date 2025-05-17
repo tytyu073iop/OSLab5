@@ -1,9 +1,10 @@
 #ifndef GLOBALS_MINE
 #define GLOBALS_MINE
 #include <Windows.h>
+#include <map>
 
-extern HANDLE* writesEvents;
-extern HANDLE* readEvents;
+extern std::map<int, HANDLE> writesEvents;
+extern std::map<int, HANDLE> readEvents;
 
 
 #endif
