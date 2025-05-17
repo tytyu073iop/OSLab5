@@ -1,5 +1,4 @@
 #include "globals.h"
 
-writesEvents = nullptr;
-namedPipe = nullptr;
-readEvents = nullptr;
+HANDLE* writesEvents = nullptr;
+HANDLE* readEvents = nullptr;

@@ -2,17 +2,30 @@
 #include <iostream>
 #include <Windows.h>
 
+int three() {
+    std::cerr << "Error happend. Session terminated\n";
+    int v;
+    std::cin >> v;
+    return 3;
+}
+
 int main() {
-    HANDLE file = CreateFile("\\\\.\\pipe\\OSLab5", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, NULL, NULL, NULL);
-    if (file == NULL) {
+    if (!WaitNamedPipe("\\\\.\\pipe\\OSLab5" ,NMPWAIT_WAIT_FOREVER)) {
+        std::cerr << "Error waiting for pipe: " << GetLastError() << '\n';
+        exit(three());
+    }
+    std::cout << "Waited for connection\n";
+    HANDLE file = CreateFile("\\\\.\\pipe\\OSLab5", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, NULL, NULL);
+    if (file == INVALID_HANDLE_VALUE) {
         std::cerr << "Error creating file: " << GetLastError() << '\n';
-        exit(3);
+        exit(three());
     }
     
     while (true)
     {
         std::string whatToDo;
         std::cout << "modify, read or exit(m,r,e): ";
+        std::cin >> whatToDo;
         DWORD readBytes;
         char command;
         int num;
@@ -24,7 +37,7 @@ int main() {
             command = 'm';
             if (!WriteFile(file, &command, sizeof(command), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
-                exit(3);
+                exit(three());
             }
             if (readBytes != sizeof(command)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(command);
@@ -32,7 +45,7 @@ int main() {
             
             if (!WriteFile(file, &num, sizeof(num), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
-                exit(3);
+                exit(three());
             }
             if (readBytes != sizeof(num)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(num);
@@ -40,7 +53,7 @@ int main() {
             
             if (!ReadFile(file, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
-                exit(3);
+                exit(three());
             }
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(e);
@@ -53,19 +66,19 @@ int main() {
             
             if (!WriteFile(file, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
-                exit(3);
+                exit(three());
             }
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(e);
             }
-        } else if (command == 'r') {
+        } else if (whatToDo == "r") {
             std::cout << "Enter number of employee: ";
             std::cin >> num;
             employee e;
             command = 'r';
             if (!WriteFile(file, &command, sizeof(command), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
-                exit(3);
+                exit(three());
             }
             if (readBytes != sizeof(command)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(command);
@@ -73,7 +86,7 @@ int main() {
             
             if (!WriteFile(file, &num, sizeof(num), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
-                exit(3);
+                exit(three());
             }
             if (readBytes != sizeof(num)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(num);
@@ -81,7 +94,7 @@ int main() {
             
             if (!ReadFile(file, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
-                exit(3);
+                exit(three());
             }
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(e);
@@ -90,7 +103,7 @@ int main() {
         } else if (whatToDo == "e") {
             return 0;
         } else {
-            std::cerr << "got unknown command: repeating" << command << '\n';
+            std::cerr << "got unknown command: repeating" << '\n';
         }
     }
     

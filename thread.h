@@ -1,9 +1,10 @@
 #ifndef THREAD_MINE
 #define THREAD_MINE
 #include <Windows.h>
+#include "RFM.h"
 
-VOID WINAPI cover(LPVOID arg);
+DWORD WINAPI cover(LPVOID arg);
 
-void thread();
+void thread(RFM* rfm);
 
 #endif

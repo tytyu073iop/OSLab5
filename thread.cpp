@@ -4,30 +4,33 @@
 #include "RFM.h"
 #include <iostream>
 
-VOID WINAPI cover(LPVOID arg)
+DWORD WINAPI cover(LPVOID arg)
 {
-    thread();
+    thread(reinterpret_cast<RFM*>(arg));
+    return 0;
 }
 
-void thread(RFM rfm)
+void thread(RFM* rfm)
 {
-    if (!ConnectNamedPipe(*(namedPipe), NULL)) {
+    HANDLE namedPipe = CreateNamedPipe("\\\\.\\pipe\\OSLab5", PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 4096*sizeof(TCHAR), 4096*sizeof(TCHAR), 5000, NULL);
+    if (!ConnectNamedPipe(namedPipe, NULL)) {
         std::cerr << "Error connecting to pipe: " << GetLastError() << '\n';
         exit(3);
     }
+    std::cout << "Connection completed\n";
     
     while (true) {
         char command;
         int num;
         DWORD readBytes;
-        if (!ReadFile(*(namedPipe), &command, sizeof(command), &readBytes, NULL)) {
+        if (!ReadFile(namedPipe, &command, sizeof(command), &readBytes, NULL)) {
             std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
             exit(3);
         }
         if (readBytes != sizeof(command)) {
             std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(command);
         }
-        if (!ReadFile(*(namedPipe), &num, sizeof(num), &readBytes, NULL)) {
+        if (!ReadFile(namedPipe, &num, sizeof(num), &readBytes, NULL)) {
             std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
             exit(3);
         }
@@ -42,30 +45,32 @@ void thread(RFM rfm)
                 std::cerr << "Wait failed: " << GetLastError() << '\n';
             }
             ResetEvent(readEvents[num]);
-            e = rfm.read(num);
+            e = rfm->read(num);
             SetEvent(readEvents[num]);
-            if (!WriteFile(*(namedPipe), &e, sizeof(e), &readBytes, NULL)) {
+            if (!WriteFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
                 exit(3);
             }
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(e);
             }
+            std::cout << "Write has ended\n";
             
-            if (!ReadFile(*(namedPipe), &e, sizeof(e), &readBytes, NULL)) {
+            if (!ReadFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
                 exit(3);
             }
+            std::cout << "read has2 ended\n";
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(e);
             }
             
-            auto p = WaitForSingleObject(readEvents[num], INFINITE);
+            p = WaitForSingleObject(readEvents[num], INFINITE);
             if (p == WAIT_FAILED) {
                 std::cerr << "Wait failed: " << GetLastError() << '\n';
             }
             ResetEvent(writesEvents[num]);
-            rfm.edit(num, e);
+            rfm->edit(num, e);
             SetEvent(writesEvents[num]);
         } else if (command == 'r') {
             employee e;
@@ -74,9 +79,9 @@ void thread(RFM rfm)
                 std::cerr << "Wait failed: " << GetLastError() << '\n';
             }
             ResetEvent(readEvents[num]);
-            e = rfm.read(num);
+            e = rfm->read(num);
             SetEvent(readEvents[num]);
-            if (!WriteFile(*(namedPipe), &e, sizeof(e), &readBytes, NULL)) {
+            if (!WriteFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
                 exit(3);
             }

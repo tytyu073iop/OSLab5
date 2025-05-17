@@ -2,8 +2,8 @@
 #define GLOBALS_MINE
 #include <Windows.h>
 
-HANDLE* writesEvents;
-HANDLE* readEvents;
-HANDLE* namedPipe;
+extern HANDLE* writesEvents;
+extern HANDLE* readEvents;
+
 
 #endif

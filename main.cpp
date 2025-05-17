@@ -50,7 +50,8 @@ int main() {
         }
 
         std::string name;
-        int num, hours;
+        int num;
+        double hours;
         std::cout << "Enter the number of employee: ";
         std::cin >> num;
         std::cout << "Enter name of employee: ";
@@ -69,7 +70,7 @@ int main() {
     {
         employee e;
         in.read(reinterpret_cast<char*>(&e), sizeof(employee));
-        std::cout << "num: " << e.num << "name: " << e.name << "hours: " << e.hours << '\n';
+        std::cout << "num: " << e.num << " name: " << e.name << " hours: " << e.hours << '\n';
     }
 
     char processName[] = "client.exe";
@@ -81,18 +82,10 @@ int main() {
     PROCESS_INFORMATION* pis = new PROCESS_INFORMATION[amountOfClients];
     STARTUPINFO* sis = new STARTUPINFO[amountOfClients];
     HANDLE* threads = new HANDLE[amountOfClients];
-
-    namedPipe = new HANDLE();
-    *(namedPipe) = CreateNamedPipe("\\\\.\\pipe\\OSLab5", PIPE_ACCESS_DUPLEX | FILE_FLAG_WRITE_THROUGH, PIPE_TYPE_BYTE | PIPE_WAIT, amountOfClients * 10, 4096*sizeof(TCHAR), 4096*sizeof(TCHAR), 5000, NULL);
-
-    if (*(namedPipe) == NULL) {
-        std::cerr << "Cannot create pipe: " << GetLastError() << '\n';
-        exit(3);
-    }
     
     for (size_t i = 0; i < amountOfClients; i++)
     {
-        threads[i] = CreateThread(NULL, NULL, cover, NULL, NULL, NULL);
+        threads[i] = CreateThread(NULL, NULL, cover, &rfm, NULL, NULL);
         if (threads[i] == NULL) {
             std::cerr << "Cannot create thread(i, error): " << i << ' ' << GetLastError() << '\n';
         }
