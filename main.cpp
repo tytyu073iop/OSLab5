@@ -2,6 +2,10 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "RFM.h"
+#include <Windows.h>
+#include "globals.h"
+#include "thread.h"
 
 int main() {
     std::string filename;
@@ -24,14 +28,84 @@ int main() {
         return 1;
     }
 
+    RFM rfm(in, out);
+
     std::cout << "\tSetup beagn:\n";
     std::cout << "How many students to enter: ";
     size_t howMany;
     std::cin >> howMany;
 
+    writesEvents = new HANDLE[howMany];
+    readEvents = new HANDLE[howMany];
+
     for (size_t i = 0; i < howMany; i++)
     {
-        /* code */
+        writesEvents[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
+        if (writesEvents[i] == NULL) {
+            std::cerr << "Cannot create write event: " << GetLastError() << '\n';
+        }
+        readEvents[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
+        if (readEvents[i] == NULL) {
+            std::cerr << "Cannot create read event: " << GetLastError() << '\n';
+        }
+
+        std::string name;
+        int num, hours;
+        std::cout << "Enter the number of employee: ";
+        std::cin >> num;
+        std::cout << "Enter name of employee: ";
+        std::cin >> name;
+        std::cout << "Enter worked hours for employee: ";
+        std::cin >> hours;
+        employee e{.num = num, .hours = hours};
+        strcpy(e.name, name.c_str());
+        
+        rfm.add(e);
     }
+
+    std::cout << "\tHere the file:\n";
+    //reverse enginiring
+    for (size_t i = 0; i < howMany; i++)
+    {
+        employee e;
+        in.read(reinterpret_cast<char*>(&e), sizeof(employee));
+        std::cout << "num: " << e.num << "name: " << e.name << "hours: " << e.hours << '\n';
+    }
+
+    char processName[] = "client.exe";
+
+    std::cout << "How many clients to start: ";
+    size_t amountOfClients;
+    std::cin >> amountOfClients;
+
+    PROCESS_INFORMATION* pis = new PROCESS_INFORMATION[amountOfClients];
+    STARTUPINFO* sis = new STARTUPINFO[amountOfClients];
+    HANDLE* threads = new HANDLE[amountOfClients];
+
+    namedPipe = new HANDLE();
+    *(namedPipe) = CreateNamedPipe("\\\\.\\pipe\\OSLab5", PIPE_ACCESS_DUPLEX | FILE_FLAG_WRITE_THROUGH, PIPE_TYPE_BYTE | PIPE_WAIT, amountOfClients * 10, 4096*sizeof(TCHAR), 4096*sizeof(TCHAR), 5000, NULL);
+
+    if (*(namedPipe) == NULL) {
+        std::cerr << "Cannot create pipe: " << GetLastError() << '\n';
+        exit(3);
+    }
+    
+    for (size_t i = 0; i < amountOfClients; i++)
+    {
+        threads[i] = CreateThread(NULL, NULL, cover, NULL, NULL, NULL);
+        if (threads[i] == NULL) {
+            std::cerr << "Cannot create thread(i, error): " << i << ' ' << GetLastError() << '\n';
+        }
+
+        ZeroMemory(&sis[i], sizeof(STARTUPINFO));
+        sis[i].cb = sizeof(STARTUPINFO);
+
+        if (!CreateProcess(NULL, processName, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &sis[i], &pis[i])) {
+            std::cerr << "Error: cannot create process(i, error): " << i << ' ' << GetLastError() << '\n';
+            exit(3);
+        }
+    }
+    
+    
     
 }
