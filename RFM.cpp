@@ -15,6 +15,7 @@ void RFM::add(employee e) {
     }
     ids[e.num] = out.tellp();
     out.write(reinterpret_cast<const char*>(&e), sizeof(employee));
+    out.flush();
 }
 
 void RFM::edit(int num, employee e) {
@@ -24,6 +25,7 @@ void RFM::edit(int num, employee e) {
     }
     out.seekp(ids[num]);
     out.write(reinterpret_cast<const char*>(&e), sizeof(employee));
+    out.flush();
 }
 
 employee RFM::read(int num) {
