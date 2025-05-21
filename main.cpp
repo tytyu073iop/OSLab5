@@ -60,6 +60,8 @@ int main() {
         if (readEvents[num] == NULL) {
             std::cerr << "Cannot create read event: " << GetLastError() << '\n';
         }
+        InitializeCriticalSection(&varCS[num]);
+        counterReadEvent[num] = 0;
     }
 
     std::cout << "\tHere the file:\n";

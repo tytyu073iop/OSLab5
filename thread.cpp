@@ -44,9 +44,20 @@ void thread(RFM* rfm)
             if (p == WAIT_FAILED) {
                 std::cerr << "Wait failed: " << GetLastError() << '\n';
             }
+            EnterCriticalSection(&varCS[num]);
+            counterReadEvent[num]++;
             ResetEvent(readEvents[num]);
+            LeaveCriticalSection(&varCS[num]);
+
             e = rfm->read(num);
-            SetEvent(readEvents[num]);
+            
+            EnterCriticalSection(&varCS[num]);
+            counterReadEvent[num]--;
+            if (counterReadEvent[num] <= 0) {
+                SetEvent(readEvents[num]);
+                counterReadEvent[num] = 0;
+            }
+            LeaveCriticalSection(&varCS[num]);
             if (!WriteFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
                 return;
@@ -54,21 +65,17 @@ void thread(RFM* rfm)
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(e);
             }
-            std::cout << "Write has ended\n";
             
             if (!ReadFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
                 return;
             }
-            std::cout << "read has2 ended\n";
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(e);
             }
             
-            p = WaitForSingleObject(readEvents[num], INFINITE);
-            if (p == WAIT_FAILED) {
-                std::cerr << "Wait failed: " << GetLastError() << '\n';
-            }
+            const HANDLE arr[]{readEvents[num], writesEvents[num]};
+            p = WaitForMultipleObjects(2, arr, TRUE, INFINITE);
             ResetEvent(writesEvents[num]);
             rfm->edit(num, e);
             SetEvent(writesEvents[num]);
@@ -78,9 +85,20 @@ void thread(RFM* rfm)
             if (p == WAIT_FAILED) {
                 std::cerr << "Wait failed: " << GetLastError() << '\n';
             }
+            EnterCriticalSection(&varCS[num]);
+            counterReadEvent[num]++;
             ResetEvent(readEvents[num]);
+            LeaveCriticalSection(&varCS[num]);
+
             e = rfm->read(num);
-            SetEvent(readEvents[num]);
+
+            EnterCriticalSection(&varCS[num]);
+            counterReadEvent[num]--;
+            if (counterReadEvent[num] <= 0) {
+                SetEvent(readEvents[num]);
+                counterReadEvent[num] = 0;
+            }
+            LeaveCriticalSection(&varCS[num]);
             if (!WriteFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
                 return;
