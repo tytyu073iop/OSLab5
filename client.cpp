@@ -60,7 +60,7 @@ int main() {
                 std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(e);
             }
             std::string name;
-            std::cout << "num: " << e.num << " name: " << name << " hours: " << e.hours << '\n';
+            std::cout << "num: " << e.num << " name: " << e.name << " hours: " << e.hours << '\n';
             while (true) {
                 std::cout << "enter new name: ";
                 std::cin >> name;
@@ -76,7 +76,7 @@ int main() {
                 std::string hours;
                 std::cin >> hours;
                 try {
-                    e.hours = std::stoi(hours);
+                    e.hours = std::stod(hours);
                     break;
                 } catch (const std::invalid_argument& e) {
                     std::cerr << "Invalid argument: " << e.what() << std::endl;
