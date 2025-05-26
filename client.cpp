@@ -1,5 +1,6 @@
 #include "employee.h"
 #include <iostream>
+#include <limits>
 #include <Windows.h>
 
 int three() {
@@ -58,11 +59,32 @@ int main() {
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(e);
             }
-            std::cout << "num: " << e.num << " name: " << e.name << " hours: " << e.hours << '\n';
-            std::cout << "enter new name: ";
-            std::cin >> e.name;
-            std::cout << "enter new hours: ";
-            std::cin >> e.hours;
+            std::string name;
+            std::cout << "num: " << e.num << " name: " << name << " hours: " << e.hours << '\n';
+            while (true) {
+                std::cout << "enter new name: ";
+                std::cin >> name;
+                if (name.size() < 10 || name.empty()) {
+                    strcpy(e.name, name.c_str());
+                    break;
+                } else {
+                    std::cout << "name size is more than 9 or empty. Repeating.\n";
+                }
+            }
+            while (true) {
+                std::cout << "enter new hours: ";
+                std::string hours;
+                std::cin >> hours;
+                try {
+                    e.hours = std::stoi(hours);
+                    break;
+                } catch (const std::invalid_argument& e) {
+                    std::cerr << "Invalid argument: " << e.what() << std::endl;
+                } catch (const std::out_of_range& e) {
+                    std::cerr << "Out of range: " << e.what() << std::endl;
+                }
+                std::cerr << "Enter number.\n";
+            }
             
             if (!WriteFile(file, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
