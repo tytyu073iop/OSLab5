@@ -40,24 +40,13 @@ void thread(RFM* rfm)
         
         if (command == 'm') {
             employee e;
-            auto p = WaitForSingleObject(writesEvents[num], INFINITE);
-            if (p == WAIT_FAILED) {
-                std::cerr << "Wait failed: " << GetLastError() << '\n';
-            }
-            EnterCriticalSection(&varCS[num]);
-            counterReadEvent[num]++;
-            ResetEvent(readEvents[num]);
-            LeaveCriticalSection(&varCS[num]);
-
+            DWORD p;
+            const HANDLE arr[]{readEvents[num], writesEvents[num]};
+            p = WaitForMultipleObjects(2, arr, TRUE, INFINITE);
+            ResetEvent(writesEvents[num]);
+            
             e = rfm->read(num);
             
-            EnterCriticalSection(&varCS[num]);
-            counterReadEvent[num]--;
-            if (counterReadEvent[num] <= 0) {
-                SetEvent(readEvents[num]);
-                counterReadEvent[num] = 0;
-            }
-            LeaveCriticalSection(&varCS[num]);
             if (!WriteFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
                 return;
@@ -74,10 +63,19 @@ void thread(RFM* rfm)
                 std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(e);
             }
             
-            const HANDLE arr[]{readEvents[num], writesEvents[num]};
-            p = WaitForMultipleObjects(2, arr, TRUE, INFINITE);
-            ResetEvent(writesEvents[num]);
             rfm->edit(num, e);
+
+            char endc;
+            if (!ReadFile(namedPipe, &endc, sizeof(endc), &readBytes, NULL)) {
+                std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
+                return;
+            }
+            if (readBytes != sizeof(endc)) {
+                std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(endc);
+            }
+            if (endc != 'e') {
+                std::cerr << "wrong end symbol. still terminating\n";
+            }
             SetEvent(writesEvents[num]);
         } else if (command == 'r') {
             employee e;
@@ -89,16 +87,9 @@ void thread(RFM* rfm)
             counterReadEvent[num]++;
             ResetEvent(readEvents[num]);
             LeaveCriticalSection(&varCS[num]);
-
+            
             e = rfm->read(num);
-
-            EnterCriticalSection(&varCS[num]);
-            counterReadEvent[num]--;
-            if (counterReadEvent[num] <= 0) {
-                SetEvent(readEvents[num]);
-                counterReadEvent[num] = 0;
-            }
-            LeaveCriticalSection(&varCS[num]);
+            
             if (!WriteFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
                 return;
@@ -106,6 +97,26 @@ void thread(RFM* rfm)
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(e);
             }
+
+            char endc;
+            if (!ReadFile(namedPipe, &endc, sizeof(endc), &readBytes, NULL)) {
+                std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
+                return;
+            }
+            if (readBytes != sizeof(endc)) {
+                std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(endc);
+            }
+            if (endc != 'e') {
+                std::cerr << "wrong end symbol. still terminating\n";
+            }
+            
+            EnterCriticalSection(&varCS[num]);
+            counterReadEvent[num]--;
+            if (counterReadEvent[num] <= 0) {
+                SetEvent(readEvents[num]);
+                counterReadEvent[num] = 0;
+            }
+            LeaveCriticalSection(&varCS[num]);
         } else {
             std::cerr << "got unknown command: " << command << '\n';
         }

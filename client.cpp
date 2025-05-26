@@ -86,6 +86,23 @@ int main() {
                 std::cerr << "Enter number.\n";
             }
             
+            bool exitb = false;
+            while (true) {
+                std::string state;
+                std::cout << "send data to server or not(y/n): ";
+                std::cin >> state;
+                if (state == "y") {
+                    break;
+                } else if (state == "n") {
+                    exitb = true;
+                    break;
+                } else {
+                    std::cout << "wrong command. repeating\n";
+                }
+            }
+            if (exitb) {
+                continue;
+            }
             if (!WriteFile(file, &e, sizeof(e), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
                 exit(three());
@@ -93,6 +110,22 @@ int main() {
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(e);
             }
+            
+            std::cout << "Press any key to end modification";
+            std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+            std::getchar();
+            char endc = 'e';
+
+            if (!WriteFile(file, &endc, sizeof(endc), &readBytes, NULL)) {
+                std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
+                exit(three());
+            }
+            if (readBytes != sizeof(endc)) {
+                std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(endc);
+            }
+
+            // end
+            
         } else if (whatToDo == "r") {
             std::cout << "Enter number of employee: ";
             std::cin >> num;
@@ -122,6 +155,19 @@ int main() {
                 std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(e);
             }
             std::cout << "num: " << e.num << " name: " << e.name << " hours: " << e.hours << '\n';
+
+            std::cout << "Press any key to end reading";
+            std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+            std::getchar();
+            char endc = 'e';
+
+            if (!WriteFile(file, &endc, sizeof(endc), &readBytes, NULL)) {
+                std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
+                exit(three());
+            }
+            if (readBytes != sizeof(endc)) {
+                std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(endc);
+            }
         } else if (whatToDo == "e") {
             return 0;
         } else {
