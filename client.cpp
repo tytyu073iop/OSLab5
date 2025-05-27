@@ -100,22 +100,36 @@ int main() {
                     std::cout << "wrong command. repeating\n";
                 }
             }
+            char continuec;
             if (exitb) {
-                continue;
+                continuec = 'e';
+            } else {
+                continuec = 'c';
             }
-            if (!WriteFile(file, &e, sizeof(e), &readBytes, NULL)) {
+            if (!WriteFile(file, &continuec, sizeof(continuec), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
                 exit(three());
             }
-            if (readBytes != sizeof(e)) {
-                std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(e);
+            if (readBytes != sizeof(continuec)) {
+                std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(continuec);
+            }
+            
+            if (!exitb) {
+                if (!WriteFile(file, &e, sizeof(e), &readBytes, NULL)) {
+                    std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
+                    exit(three());
+                }
+                if (readBytes != sizeof(e)) {
+                    std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(e);
+                }
+                
             }
             
             std::cout << "Press any key to end modification";
             std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
             std::getchar();
             char endc = 'e';
-
+            
             if (!WriteFile(file, &endc, sizeof(endc), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
                 exit(three());
@@ -123,7 +137,7 @@ int main() {
             if (readBytes != sizeof(endc)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(endc);
             }
-
+            
             // end
             
         } else if (whatToDo == "r") {
@@ -155,12 +169,12 @@ int main() {
                 std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(e);
             }
             std::cout << "num: " << e.num << " name: " << e.name << " hours: " << e.hours << '\n';
-
+            
             std::cout << "Press any key to end reading";
             std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
             std::getchar();
             char endc = 'e';
-
+            
             if (!WriteFile(file, &endc, sizeof(endc), &readBytes, NULL)) {
                 std::cerr << "Cannot write from pipe: " << GetLastError() << '\n';
                 exit(three());

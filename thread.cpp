@@ -55,16 +55,30 @@ void thread(RFM* rfm)
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(e);
             }
             
-            if (!ReadFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
+            char continuec;
+            if (!ReadFile(namedPipe, &continuec, sizeof(continuec), &readBytes, NULL)) {
                 std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
                 return;
             }
-            if (readBytes != sizeof(e)) {
-                std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(e);
+            if (readBytes != sizeof(continuec)) {
+                std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(continuec);
+            }
+            if (continuec == 'c') {
+                if (!ReadFile(namedPipe, &e, sizeof(e), &readBytes, NULL)) {
+                    std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
+                    return;
+                }
+                if (readBytes != sizeof(e)) {
+                    std::cerr << "Caution: not full data read(read, should): " << readBytes << ' ' << sizeof(e);
+                }
+                
+                rfm->edit(num, e);
+            } else if (continuec == 'e') {
+    
+            } else {
+                std::cerr << "wrong end symbol. still terminating\n";
             }
             
-            rfm->edit(num, e);
-
             char endc;
             if (!ReadFile(namedPipe, &endc, sizeof(endc), &readBytes, NULL)) {
                 std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
@@ -97,7 +111,7 @@ void thread(RFM* rfm)
             if (readBytes != sizeof(e)) {
                 std::cerr << "Caution: not full data write(read, should): " << readBytes << ' ' << sizeof(e);
             }
-
+            
             char endc;
             if (!ReadFile(namedPipe, &endc, sizeof(endc), &readBytes, NULL)) {
                 std::cerr << "Cannot read from pipe: " << GetLastError() << '\n';
